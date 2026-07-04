@@ -39,8 +39,10 @@ export class VoiceTranscriptionPlugin implements IPlugin {
 
   onEnable(context: PluginContext): Promise<void> {
     this.coordinator = this.build(context);
+    const priority = Number(context.config.hookPriority) || 60;
     context.registerHook('message:received', ctx =>
       Promise.resolve(this.onMessage(ctx as HookContext<IncomingMessage>)),
+      priority,
     );
     if (!readOptionalString(context.config, 'deliveryWebhookUrl') && readChatDelivery(context.config) === 'off') {
       context.logger.warn(

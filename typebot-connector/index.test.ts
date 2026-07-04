@@ -23,11 +23,12 @@ test('onEnable registers a message:received hook that returns {continue:true}', 
     storage: { get: async () => null, set: async () => {}, delete: async () => {}, list: async () => [] },
     net: { fetch: async () => ({ ok: true, status: 200, headers: {}, body: '{}' }) },
     conversations: { send: async () => {} },
-    registerHook: (event: string, handler: HookHandler) => void (registered = { event, handler }),
+    registerHook: (event: string, handler: HookHandler, priority?: number) => void (registered = { event, handler, priority }),
   } as unknown as PluginContext;
 
   await new Plugin().onEnable(ctx);
   assert.equal(registered?.event, 'message:received');
+  assert.equal(registered?.priority, 30, 'default hookPriority');
   const result = await registered!.handler({ event: 'message:received', data: undefined, timestamp: new Date(), source: 'Engine' });
   assert.deepEqual(result, { continue: true });
 });
@@ -40,10 +41,11 @@ test('message:received hook returns {continue:true} without awaiting a hanging T
     storage: { get: async () => null, set: async () => {}, delete: async () => {}, list: async () => [] },
     net: { fetch: () => new Promise(() => {}) },
     conversations: { send: async () => {} },
-    registerHook: (event: string, handler: HookHandler) => void (registered = { event, handler }),
+    registerHook: (event: string, handler: HookHandler, priority?: number) => void (registered = { event, handler, priority }),
   } as unknown as PluginContext;
 
   await new Plugin().onEnable(ctx);
+  assert.equal(registered?.priority, 30, 'default hookPriority');
   const populated = {
     event: 'message:received',
     sessionId: 'sess',
@@ -55,4 +57,19 @@ test('message:received hook returns {continue:true} without awaiting a hanging T
     },
   } as unknown as HookContext;
   assert.deepEqual(await registered!.handler(populated), { continue: true });
+});
+
+test('onEnable reads hookPriority from config', async () => {
+  let captured: { event: string; handler: HookHandler; priority?: number } | undefined;
+  const ctx = {
+    config: { publicId: 'bot', apiHost: 'https://typebot.io', hookPriority: 15 },
+    logger: { log() {}, debug() {}, warn() {}, error() {} },
+    storage: { get: async () => null, set: async () => {}, delete: async () => {}, list: async () => [] },
+    net: { fetch: () => new Promise(() => {}) },
+    conversations: { send: async () => {} },
+    registerHook: (event: string, handler: HookHandler, priority?: number) => void (captured = { event, handler, priority }),
+  } as unknown as PluginContext;
+
+  await new Plugin().onEnable(ctx);
+  assert.equal(captured?.priority, 15, 'custom hookPriority from config');
 });

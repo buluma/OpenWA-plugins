@@ -41,6 +41,7 @@ export default class TypebotConnector implements IPlugin {
     const lock = new KeyedAsyncLock();
     const store = new SessionStore(ctx.storage);
 
+    const priority = Number(ctx.config.hookPriority) || 30;
     ctx.registerHook('message:received', async (h: HookContext): Promise<HookResult> => {
       const sessionId = h.sessionId;
       const msg = h.data as IncomingMessage | undefined;
@@ -57,7 +58,7 @@ export default class TypebotConnector implements IPlugin {
         ).catch(e => ctx.logger.error('typebot turn failed', e));
       }
       return { continue: true };
-    });
+    }, priority);
 
     ctx.logger.log('typebot-connector enabled');
   }

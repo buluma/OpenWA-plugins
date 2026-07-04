@@ -30,21 +30,22 @@ function makeStorage() {
 
 function fakeContext(opts: { net: { fetch: (...a: unknown[]) => Promise<PluginNetResponse> }; config?: Record<string, unknown> }) {
   let hook: ((ctx: HookContext<IncomingMessage>) => Promise<HookResult>) | undefined;
+  let lastPriority: number | undefined;
   const ctx = {
     pluginId: 'voice-transcription',
     manifest: { id: 'voice-transcription' },
     config: { sttBaseUrl: 'http://stt', deliveryWebhookUrl: 'http://hook.local/in', ...opts.config },
     logger: { log() {}, debug() {}, warn() {}, error() {} },
     storage: makeStorage(),
-    registerHook: (event: string, handler: (c: HookContext<IncomingMessage>) => Promise<HookResult>) => {
-      if (event === 'message:received') hook = handler;
+    registerHook: (event: string, handler: (c: HookContext<IncomingMessage>) => Promise<HookResult>, priority?: number) => {
+      if (event === 'message:received') { hook = handler; lastPriority = priority; }
     },
     messages: {},
     engine: {},
     net: opts.net,
     hookManager: {},
   } as unknown as PluginContext;
-  return { ctx, getHook: () => hook };
+  return { ctx, getHook: () => hook, getPriority: () => lastPriority };
 }
 
 const engineCtx = (data: IncomingMessage): HookContext<IncomingMessage> => ({
@@ -88,4 +89,18 @@ test('does not start transcription for non-Engine sources', async () => {
   assert.deepEqual(result, { continue: true });
   await new Promise(r => setImmediate(r)); // let any floated work run a tick
   assert.equal(fetched, false);
+});
+
+test('onEnable registers hook with default hookPriority 60', async () => {
+  const { ctx, getPriority } = fakeContext({ config: { sttBaseUrl: 'http://stt', deliveryWebhookUrl: 'http://hook.local/in' } });
+  const plugin = new VoiceTranscriptionPlugin();
+  await plugin.onEnable(ctx);
+  assert.equal(getPriority(), 60, 'default hookPriority');
+});
+
+test('onEnable reads custom hookPriority from config', async () => {
+  const { ctx, getPriority } = fakeContext({ config: { sttBaseUrl: 'http://stt', deliveryWebhookUrl: 'http://hook.local/in', hookPriority: 25 } });
+  const plugin = new VoiceTranscriptionPlugin();
+  await plugin.onEnable(ctx);
+  assert.equal(getPriority(), 25, 'custom hookPriority from config');
 });

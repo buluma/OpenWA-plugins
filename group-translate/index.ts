@@ -36,7 +36,8 @@ export class TranslationPlugin implements IPlugin {
 
   onEnable(context: PluginContext): Promise<void> {
     this.coordinator = this.buildCoordinator(context);
-    context.registerHook('message:received', ctx => this.onMessage(context, ctx as HookContext<IncomingMessage>));
+    const priority = Number(context.config.hookPriority) || 60;
+    context.registerHook('message:received', ctx => this.onMessage(context, ctx as HookContext<IncomingMessage>), priority);
     context.logger.log('Translation plugin enabled', { action: 'translation_enabled' });
     return Promise.resolve();
   }

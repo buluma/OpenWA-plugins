@@ -65,10 +65,11 @@ export default class FaqBot implements IPlugin {
 
   async onEnable(ctx: PluginContext): Promise<void> {
     this.apply(ctx);
+    const priority = Number(ctx.config.hookPriority) || 40;
     ctx.registerHook('message:received', async (hook: HookContext) => {
       await this.onMessage(hook);
       return { continue: true };
-    });
+    }, priority);
   }
 
   async onConfigChange(ctx: PluginContext): Promise<void> {

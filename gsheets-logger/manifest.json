@@ -20,6 +20,7 @@
   "configSchema": {
     "type": "object",
     "properties": {
+      "hookPriority": { "type": "number", "default": 60, "title": "Hook execution priority", "description": "Lower numbers run first. Requires disable/re-enable the plugin to take effect." },
       "serviceAccountJson": { "type": "string", "secret": true, "required": true, "title": "Service Account JSON",
         "description": "Full service-account key JSON. Share the target sheet with this account's client_email (Editor)." },
       "spreadsheetId": { "type": "string", "required": true, "title": "Spreadsheet ID",
