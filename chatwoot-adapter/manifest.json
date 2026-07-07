@@ -41,6 +41,7 @@
   "configSchema": {
     "type": "object",
     "properties": {
+      "hookPriority": { "type": "number", "default": 50, "title": "Hook execution priority", "description": "Lower numbers run first. Requires disable/re-enable the plugin to take effect." },
       "baseUrl": {
         "type": "string",
         "title": "Chatwoot base URL",

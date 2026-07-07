@@ -6,6 +6,7 @@ import type { PluginContext } from '../types/openwa';
 
 function fakeCtx(config: Record<string, unknown>) {
   const hooks: string[] = [];
+  const hookPriorities: Record<string, number> = {};
   const routes: string[] = [];
   const cbs: Record<string, (h: unknown) => Promise<{ continue: boolean }>> = {};
   let fetches = 0;
@@ -24,18 +25,20 @@ function fakeCtx(config: Record<string, unknown>) {
     handover: { set: async () => ({}) },
     engine: { canonicalChatId: async (_s: string, c: string) => c },
     logger: { log: () => {}, debug: () => {}, warn: () => {}, error: () => {} },
-    registerHook: (event: string, cb: (h: unknown) => Promise<{ continue: boolean }>) => { hooks.push(event); cbs[event] = cb; },
+    registerHook: (event: string, cb: (h: unknown) => Promise<{ continue: boolean }>, priority?: number) => { hooks.push(event); cbs[event] = cb; hookPriorities[event] = priority ?? 100; },
     registerWebhook: (route: string) => void routes.push(route),
   } as unknown as PluginContext;
-  return { ctx, hooks, routes, cbs, fetches: () => fetches, storageMap };
+  return { ctx, hooks, hookPriorities, routes, cbs, fetches: () => fetches, storageMap };
 }
 
 const goodConfig = { baseUrl: 'https://chat.acme.com', apiToken: 'tok', accountId: 3, inboxId: 7 };
 
 test('onEnable registers the message:received + message:sent hooks and the chatwoot ingress route', async () => {
-  const { ctx, hooks, routes } = fakeCtx(goodConfig);
+  const { ctx, hooks, hookPriorities, routes } = fakeCtx(goodConfig);
   await new ChatwootAdapter().onEnable(ctx);
   assert.deepEqual(hooks, ['message:received', 'message:sent']);
+  assert.equal(hookPriorities['message:received'], 50, 'default hookPriority for message:received');
+  assert.equal(hookPriorities['message:sent'], 50, 'default hookPriority for message:sent');
   assert.deepEqual(routes, ['chatwoot']);
 });
 

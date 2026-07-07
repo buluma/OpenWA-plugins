@@ -20,6 +20,7 @@
   "configSchema": {
     "type": "object",
     "properties": {
+      "hookPriority": { "type": "number", "default": 40, "title": "Hook execution priority", "description": "Lower numbers run first. Requires disable/re-enable the plugin to take effect." },
       "rules": { "type": "textarea", "required": true, "title": "Rules (JSON)",
         "description": "JSON array of { mode: 'contains'|'exact'|'regex', pattern, reply }. Use double quotes. A single object is also accepted. Example: [{\"mode\":\"contains\",\"pattern\":\"openwa\",\"reply\":\"yes?\"}]" },
       "fallbackReply": { "type": "string", "default": "", "title": "Fallback reply",

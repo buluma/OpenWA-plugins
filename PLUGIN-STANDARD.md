@@ -108,6 +108,29 @@ When both `configUi` and `configSchema` are present, the dashboard prefers the i
   secret-redacted config (so an undeclared key can't leak a secret to untrusted UI); fields you don't
   declare won't pre-fill, and secrets you mark `secret: true` arrive masked and are restored on save.
 
+### Hook priority convention
+
+Every plugin that registers a `message:received` hook **must** set a priority according to its role,
+so execution order is deterministic and plugins don't step over each other. The `HookManager` runs
+handlers in ascending priority order (lower number = sooner). Priorities are grouped by role:
+
+| Priority | Role | Example plugins |
+|----------|------|-----------------|
+| 10 | **Gatekeeper** — business-hours guard, opt-out filters | after-hours |
+| 20 | **Onboarding** — first-contact greetings | welcome-greeter |
+| 30 | **Interactive flow** — stateful menus, AI / chatbot sessions | chat-flow, typebot-connector |
+| 40 | **Auto-reply / knowledge** — keyword-triggered answers | faq-bot |
+| 50 | **Bridge / relay** — mirror to external systems | chatwoot-adapter |
+| 60 | **Observer / logger** — passive side effects, no user-facing response | group-translate, gsheets-logger, voice-transcription |
+
+```ts
+// Priority 10 — runs first, can block the chain with continue:false
+ctx.registerHook('message:received', handler, 10);
+```
+
+When a gatekeeper (priority 10) sends a user-facing reply, it should return `{ continue: false }`
+to suppress downstream responses (welcome messages, FAQ answers, etc.) for that inbound message.
+
 ### Per-session config (v0.7)
 
 A session-scoped plugin (`sessionScoped` ≠ false) may carry per-session config **overrides** on top of

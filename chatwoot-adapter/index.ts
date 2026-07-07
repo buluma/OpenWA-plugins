@@ -90,6 +90,7 @@ export default class ChatwootAdapter implements IPlugin {
       log: (m: string, e?: unknown) => ctx.logger.error(m, e),
     });
 
+    const priority = Number(ctx.config.hookPriority) || 50;
     ctx.registerHook('message:received', async (h: HookContext): Promise<HookResult> => {
       const sessionId = h.sessionId;
       const msg = h.data as IncomingMessage;
@@ -106,7 +107,7 @@ export default class ChatwootAdapter implements IPlugin {
         }
       }
       return { continue: true };
-    });
+    }, priority);
 
     // The account's OWN outbound sends (linked phone / WhatsApp app / OpenWA REST API) arrive on
     // message:sent, not message:received. Relay them as 'outgoing' so the Chatwoot thread mirrors the full
@@ -124,7 +125,7 @@ export default class ChatwootAdapter implements IPlugin {
         }
       }
       return { continue: true };
-    });
+    }, priority);
 
     ctx.registerWebhook('chatwoot', async (req: WebhookRequest) =>
       handleOutbound(

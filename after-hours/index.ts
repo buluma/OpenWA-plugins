@@ -64,10 +64,11 @@ export default class AfterHours implements IPlugin {
 
   async onEnable(ctx: PluginContext): Promise<void> {
     this.apply(ctx);
+    const priority = Number(ctx.config.hookPriority) || 10;
     ctx.registerHook('message:received', async (hook: HookContext) => {
-      await this.onMessage(hook);
-      return { continue: true };
-    });
+      const blocked = await this.onMessage(hook);
+      return { continue: !blocked };
+    }, priority);
   }
 
   async onConfigChange(ctx: PluginContext, _newConfig: Record<string, unknown>): Promise<void> {
@@ -81,22 +82,25 @@ export default class AfterHours implements IPlugin {
     this.config = config;
   }
 
-  private async onMessage(hook: HookContext): Promise<void> {
-    if (hook.source !== 'Engine' || !hook.sessionId) return;
+  /** Returns true if the away message was sent (gate should block further processing). */
+  private async onMessage(hook: HookContext): Promise<boolean> {
+    if (hook.source !== 'Engine' || !hook.sessionId) return false;
     const m = (hook.data ?? {}) as Partial<IncomingMessage>;
-    if (m.fromMe || typeof m.body !== 'string' || !m.chatId || !m.id) return;
-    if (m.isGroup && !this.config.respondInGroups) return;
-    if (!isAfterHours(new Date(), this.schedule, this.config.timezone)) return;
+    if (m.fromMe || typeof m.body !== 'string' || !m.chatId || !m.id) return false;
+    if (m.isGroup && !this.config.respondInGroups) return false;
+    if (!isAfterHours(new Date(), this.schedule, this.config.timezone)) return false;
 
     const sessionId = hook.sessionId;
     const key = `${sessionId}:${m.chatId}`;
     const cooldownMs = Math.max(0, this.config.cooldownSec) * 1000;
-    if (!allowReply(this.repliedAt, key, Date.now(), cooldownMs)) return;
+    if (!allowReply(this.repliedAt, key, Date.now(), cooldownMs)) return true; // still gated — cooldown active
 
     try {
       await this.ctx?.messages.reply(sessionId, m.chatId, m.id, this.config.awayMessage);
+      return true;
     } catch (err) {
       this.ctx?.logger.error('after-hours: reply failed', err);
+      return false;
     }
   }
 }

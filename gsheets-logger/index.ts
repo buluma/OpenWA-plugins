@@ -83,11 +83,12 @@ export default class GSheetsLogger implements IPlugin {
     const restored = await ctx.storage.get<string[][]>(BUFFER_KEY);
     if (Array.isArray(restored)) this.buffer = restored;
 
+    const priority = Number(ctx.config.hookPriority) || 60;
     for (const event of LOGGED_EVENTS) {
       ctx.registerHook(event, async (hook: HookContext) => {
         this.enqueue(hook);
         return { continue: true };
-      });
+      }, priority);
     }
     this.startTimer(config.flushIntervalSec);
     ctx.logger.log(`gsheets-logger v${PLUGIN_VERSION} enabled → sheet ${config.spreadsheetId} (tab "${config.sheetTab}")`);

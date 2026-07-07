@@ -50,8 +50,10 @@ export default class ChatFlow implements IPlugin {
 
   async onEnable(ctx: PluginContext): Promise<void> {
     this.config = parseConfig(ctx.config);
+    const priority = Number(ctx.config.hookPriority) || 30;
     ctx.registerHook('message:received', hook =>
       this.onMessage(ctx, hook as HookContext<IncomingMessage>),
+      priority,
     );
     // Reclaim states abandoned before this enable, then keep sweeping — lazy per-key expiry only fires
     // when a conversation messages again, so an abandoned flow would otherwise linger in storage forever.

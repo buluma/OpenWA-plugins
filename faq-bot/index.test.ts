@@ -59,3 +59,31 @@ test('allowFallback eviction is recency-aware: re-touching a key protects it fro
   assert.equal(map.has('chat-0'), true); // protected by recent touch
   assert.equal(map.has('chat-1'), false); // now the oldest, evicted
 });
+
+test('onEnable registers hook with default hookPriority 40', async () => {
+  const { default: FaqBot } = await import('./index.ts');
+  let capturedPriority: number | undefined;
+  const ctx = {
+    config: { rules: '[{"mode":"contains","pattern":"hi","reply":"Hello!"}]' },
+    logger: { log() {}, debug() {}, warn() {}, error() {} },
+    storage: { get: async () => null, set: async () => {}, delete: async () => {}, list: async () => [] },
+    messages: { reply: async () => {} },
+    registerHook: (_event: string, _handler: unknown, priority?: number) => { capturedPriority = priority; },
+  } as any;
+  await new FaqBot().onEnable(ctx);
+  assert.equal(capturedPriority, 40, 'default hookPriority');
+});
+
+test('onEnable reads custom hookPriority from config', async () => {
+  const { default: FaqBot } = await import('./index.ts');
+  let capturedPriority: number | undefined;
+  const ctx = {
+    config: { rules: '[{"mode":"contains","pattern":"hi","reply":"Hello!"}]', hookPriority: 35 },
+    logger: { log() {}, debug() {}, warn() {}, error() {} },
+    storage: { get: async () => null, set: async () => {}, delete: async () => {}, list: async () => [] },
+    messages: { reply: async () => {} },
+    registerHook: (_event: string, _handler: unknown, priority?: number) => { capturedPriority = priority; },
+  } as any;
+  await new FaqBot().onEnable(ctx);
+  assert.equal(capturedPriority, 35, 'custom hookPriority from config');
+});

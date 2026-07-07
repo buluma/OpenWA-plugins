@@ -54,3 +54,29 @@ test('allowReply eviction is recency-aware: re-touching a key protects it', () =
   assert.equal(map.has('k-0'), true); // protected by recent touch
   assert.equal(map.has('k-1'), false); // now the oldest, evicted
 });
+
+test('onEnable registers hook with default hookPriority 10', async () => {
+  const { default: AfterHours } = await import('./index.ts');
+  let capturedPriority: number | undefined;
+  const ctx = {
+    config: { schedule: '{"mon":"09:00-17:00"}', awayMessage: 'closed', timezone: 'UTC' },
+    logger: { log() {}, debug() {}, warn() {}, error() {} },
+    messages: { reply: async () => {} },
+    registerHook: (_event: string, _handler: unknown, priority?: number) => { capturedPriority = priority; },
+  } as any;
+  await new AfterHours().onEnable(ctx);
+  assert.equal(capturedPriority, 10, 'default hookPriority');
+});
+
+test('onEnable reads custom hookPriority from config', async () => {
+  const { default: AfterHours } = await import('./index.ts');
+  let capturedPriority: number | undefined;
+  const ctx = {
+    config: { schedule: '{"mon":"09:00-17:00"}', awayMessage: 'closed', timezone: 'UTC', hookPriority: 5 },
+    logger: { log() {}, debug() {}, warn() {}, error() {} },
+    messages: { reply: async () => {} },
+    registerHook: (_event: string, _handler: unknown, priority?: number) => { capturedPriority = priority; },
+  } as any;
+  await new AfterHours().onEnable(ctx);
+  assert.equal(capturedPriority, 5, 'custom hookPriority from config');
+});

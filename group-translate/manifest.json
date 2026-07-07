@@ -22,6 +22,7 @@
   "configSchema": {
     "type": "object",
     "properties": {
+      "hookPriority": { "type": "number", "default": 60, "title": "Hook execution priority", "description": "Lower numbers run first. Requires disable/re-enable the plugin to take effect." },
       "libretranslateUrl": { "type": "string", "title": "LibreTranslate URL", "default": "http://localhost:7001", "required": true,
         "description": "Base URL of your LibreTranslate instance. Its host:port MUST also appear in this plugin's manifest `net.allow` (the host denies outbound calls to anything not allow-listed)." },
       "libretranslateApiKey": { "type": "string", "title": "LibreTranslate API key", "secret": true, "description": "Optional, if your instance requires one." },

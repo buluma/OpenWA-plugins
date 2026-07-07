@@ -20,6 +20,7 @@
   "configSchema": {
     "type": "object",
     "properties": {
+      "hookPriority": { "type": "number", "default": 10, "title": "Hook execution priority", "description": "Lower numbers run first. Requires disable/re-enable the plugin to take effect." },
       "schedule": { "type": "string", "required": true, "title": "Weekly schedule (JSON)",
         "description": "Object mapping mon..sun to \"HH:MM-HH:MM\" or null (closed), e.g. {\"mon\":\"09:00-17:00\",\"sat\":\"09:00-13:00\",\"sun\":null}." },
       "timezone": { "type": "string", "default": "UTC", "title": "IANA timezone",

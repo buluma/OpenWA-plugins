@@ -22,6 +22,7 @@
   "configSchema": {
     "type": "object",
     "properties": {
+      "hookPriority": { "type": "number", "default": 60, "title": "Hook execution priority", "description": "Lower numbers run first. Requires disable/re-enable the plugin to take effect." },
       "sttBaseUrl": {
         "type": "string",
         "title": "STT base URL",

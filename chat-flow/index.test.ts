@@ -39,3 +39,31 @@ test('toFlowNodes accepts keys that collide with Object.prototype names, but rej
   // __proto__ would set the prototype rather than an own key — reject it outright
   assert.throws(() => toFlowNodes([{ key: '__proto__', text: 'A' }]), /not allowed/);
 });
+
+test('onEnable registers hook with default hookPriority 30', async () => {
+  const { default: ChatFlow } = await import('./index.ts');
+  let capturedPriority: number | undefined;
+  const ctx = {
+    config: { greeting: 'Hi!', options: [{ key: '1', text: 'Menu item' }] },
+    logger: { log() {}, debug() {}, warn() {}, error() {} },
+    storage: { get: async () => null, set: async () => {}, delete: async () => {}, list: async () => [] },
+    messages: { reply: async () => {}, sendText: async () => {} },
+    registerHook: (_event: string, _handler: unknown, priority?: number) => { capturedPriority = priority; },
+  } as any;
+  await new ChatFlow().onEnable(ctx);
+  assert.equal(capturedPriority, 30, 'default hookPriority');
+});
+
+test('onEnable reads custom hookPriority from config', async () => {
+  const { default: ChatFlow } = await import('./index.ts');
+  let capturedPriority: number | undefined;
+  const ctx = {
+    config: { greeting: 'Hi!', options: [{ key: '1', text: 'Menu item' }], hookPriority: 22 },
+    logger: { log() {}, debug() {}, warn() {}, error() {} },
+    storage: { get: async () => null, set: async () => {}, delete: async () => {}, list: async () => [] },
+    messages: { reply: async () => {}, sendText: async () => {} },
+    registerHook: (_event: string, _handler: unknown, priority?: number) => { capturedPriority = priority; },
+  } as any;
+  await new ChatFlow().onEnable(ctx);
+  assert.equal(capturedPriority, 22, 'custom hookPriority from config');
+});
