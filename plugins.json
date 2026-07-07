@@ -1087,7 +1087,7 @@
     "repoPath": "welcome-greeter",
     "repoUrl": "https://github.com/rmyndharis/OpenWA-plugins",
     "homepage": "https://github.com/rmyndharis/OpenWA-plugins/tree/main/welcome-greeter",
-    "download": "https://github.com/rmyndharis/OpenWA-plugins/releases/download/welcome-greeter-v0.1.0/welcome-greeter.zip",
+    "download": "https://github.com/buluma/OpenWA-plugins/releases/download/welcome-greeter-v0.1.0/welcome-greeter.zip",
     "i18n": {
       "es": {
         "name": "Saludo de Bienvenida",
